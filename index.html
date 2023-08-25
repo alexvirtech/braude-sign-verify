@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datalist, Details, Modal</title>
+    <!-- ethers library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"
+        integrity="sha512-i/G7kLmYAnT7Q0oBL5EryMwK+9sGtncvmvXt/8Q7EUvgCU8pt3OJvHAu9It5lOvOCqDbgqS9Qikpwk6NTFVe1A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!--
+        The tailwind CDN is designed for development purposes only, and is not the best choice for production.
+        Read more here: https://tailwindcss.com/docs/installation 
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- example for dark theme styling when using tailwind cdn -->
+    <style>
+        .dark .dark\:text-white {
+            color: #fff;
+        }
+
+        .dark .dark\:bg-cyan-600 {
+            background-color: #155e75
+        }
+
+        .dark .dark\:bg-cyan-900 {
+            background-color: #164e63
+        }
+    </style>
+</head>
+
+<body class="dark:text-white">
+    <div class="max-w-[560px] mt-4 mx-auto pb-10 px-4">
+        <div class="text-2xl pb-6 text-center">Sign and Verify message</div>
+
+        <div class="flex justify-start gap-0 font-bold pb-4">
+            <div class="border-gray-300 border-t border-l border-r py-2 px-4 rounded-t-md" onClick="switchTab(event)">
+                Sign</div>
+            <div class="border-gray-300 border-b py-2 px-4 text-cyan-500 hover:underline cursor-pointer"
+                onClick="switchTab(event)">Verify</div>
+            <div class="grow border-b border-gray-300"></div>
+        </div>
+        <div id="signView">
+            <form onsubmit="sign(event)" onreset="resetSign(event)">
+                <div class="">Message</div>
+                <div class=""><textarea id="message" rows="3" required
+                        class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm"></textarea>
+                </div>
+                <div><button type="submit"
+                        class="w-full py-2 px-8 rounded-md bg-cyan-600 text-white cursor-pointer my-4">Sign with my
+                        private key</button></div>
+
+                <div class="hidden" id="signDiv">
+                    <div class="">Signed message</div>
+                    <div class=""><textarea id="signature" readonly rows="3"
+                            class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm"></textarea>
+                    </div>
+                    <div class="">My address</div>
+                    <div class=""><input id="address" readonly
+                            class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm" />
+                    </div>
+                    <div><button type="reset"
+                            class="w-full py-2 px-8 rounded-md bg-cyan-600 text-white cursor-pointer my-4">Clear</button>
+                    </div>
+                </div>
+            </form>
+            <ol class="list-decimal list-outside text-xs px-4">
+                <li><b>What is Signing?</b>: Signing is the process of using a private key to create a unique digital
+                    fingerprint for a specific piece of data or message.</li>
+                <li><b>Why is it Important?</b>: It confirms the authenticity of the sender, ensuring that the message
+                    has not
+                    been altered and that it indeed originates from the claimed source.</li>
+                <li><b>How Does it Work?</b>: The private key, known only to the owner, is used to generate a signature.
+                    This
+                    signature can be verified by others using the corresponding public key or address.</li>
+                <li><b>Where is it Used?</b>: Digital signatures are commonly used in blockchain technology for secure
+                    transactions, confirming ownership of digital assets, and verifying the integrity of messages or
+                    documents.</li>
+                </ul>
+        </div>
+        <div class="hidden" id="verifyView">
+            <form onsubmit="verify(event)" onreset="resetVerify(event)">
+                <div class="">Original message</div>
+                <div class=""><textarea id="message2" rows="3" required
+                        class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm"></textarea>
+                </div>
+                <div class="">Signed message</div>
+                <div class=""><textarea id="signature2" rows="3" required
+                        class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm"></textarea>
+                </div>
+                <div class="">Sender address</div>
+                <div class=""><input id="address2" required
+                        class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm" />
+                </div>
+
+                <div><button type="submit"
+                        class="w-full py-2 px-8 rounded-md bg-cyan-600 text-white cursor-pointer my-4">Veryfy with
+                        sender address</button></div>
+                <div class="hidden" id="verifyDiv">
+                    <div class="">Recovered address</div>
+                    <div class=""><input id="address3" readonly
+                            class="w-full border border-gray-300 rounded-md dark:bg-cyan-900 dark:text-white p-2 text-sm" />
+                    </div>
+                    <div><button type="reset"
+                            class="w-full py-2 px-8 rounded-md bg-cyan-600 text-white cursor-pointer my-4">Clear</button>
+                    </div>
+                    <div id="resultMessage" class="text-center text-red-400 pb-4"></div>
+                </div>
+            </form>
+            <ol class="list-decimal list-outside text-xs px-4">
+                <li><b>What is Verification?</b>: Verification is the process of using a public key or address to confirm that
+                    a signature is valid for a given piece of data or message.</li>
+                <li><b>Why is it Important?</b>: It ensures that the signed message has not been tampered with and verifies
+                    the identity of the signer, confirming that the message came from the rightful owner of the private
+                    key.</li>
+                <li><b>How Does it Work?</b>: By using the public key or address (corresponding to the private key that signed
+                    the message) and the original data, the verification process checks if the signature is valid.</li>
+                <li><b>Where is it Used?</b>: Verification is used in various digital security scenarios, including confirming
+                    the authenticity of digital documents, verifying transactions in blockchain, and ensuring secure
+                    communication between parties.</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+
+        // tabs
+        let active = 'Sign'
+        const activeTab = 'border-gray-300 border-t border-l border-r py-2 px-4 rounded-t-md'
+        const inactiveTab = 'border-gray-300 border-b py-2 px-4 text-cyan-500 hover:underline cursor-pointer'
+        const $signView = document.getElementById('signView')
+        const $verifyView = document.getElementById('verifyView')
+        // sign elements        
+        const $signDiv = document.getElementById('signDiv')
+        const $signature = document.getElementById('signature')
+        const $address = document.getElementById('address')
+        const $message = document.getElementById('message')
+        // verify elements
+        const $verifyDiv = document.getElementById('verifyDiv')
+        const $signature2 = document.getElementById('signature2')
+        const $address2 = document.getElementById('address2')
+        const $message2 = document.getElementById('message2')
+        const $address3 = document.getElementById('address3')
+        const $resultMessage = document.getElementById('resultMessage')
+
+        const switchTab = (e) => {
+            const t = e.target.innerText
+            if (t === active) return
+            if (t === 'Sign') {
+                active = 'Sign'
+                $next = e.target.nextElementSibling
+                $next.className = inactiveTab
+                e.target.className = activeTab
+
+            } else {
+                active = 'Verify'
+                $prev = e.target.previousElementSibling
+                $prev.className = inactiveTab
+                e.target.className = activeTab
+            }
+            $signView.classList.toggle('hidden')
+            $verifyView.classList.toggle('hidden')
+        }
+
+        const sign = (e) => {
+            e.preventDefault()
+            sendRequestToParent({ cat: 'signMessage', message: $message.value })
+        }
+
+        // accept private API data
+        const acceptPrivateApiData = async (o) => {
+            //console.log('acceptPrivateApiData', data)
+            try {
+                const wallet = new ethers.Wallet(o.data.pk)
+                const address = wallet.address
+                const signedMessage = await wallet.signMessage($message.value)
+                $signature.value = signedMessage
+                $address.value = address
+                $signDiv.classList.remove('hidden')
+            } catch (e) {
+                console.log('acceptPrivateApiData error', e)
+            }
+        }
+
+        const verify = (e) => {
+            e.preventDefault()
+            try {
+                const recoveredAddress = ethers.verifyMessage($message2.value, $signature2.value)
+                $address3.value = recoveredAddress
+                $verifyDiv.classList.remove('hidden')
+                $resultMessage.innerText = recoveredAddress.toLowerCase() === $address2.value.toLowerCase() ? 'Verified' : 'Not verified'
+            } catch (e) {
+                console.log('verification error', e)
+            }
+        }
+
+        const resetSign = (e) => {
+            e.preventDefault()
+            $signature.value = ''
+            $address.value = ''
+            $signDiv.classList.add('hidden')
+        }
+
+        const resetVerify = (e) => {
+            e.preventDefault()
+            $message2.value = ''
+            $signature2.value = ''
+            $address2.value = ''
+            $verifyDiv.classList.add('hidden')
+        }
+
+    </script>
+
+
+
+    <!-- special scripts for integration in MTW gallery - must be placed at the bottom of the HTML after your code -->
+    <script>
+        // custom config for the MTW app 
+        const mtwAppConfig = {
+            border: false // app border in the MTW page                    
+        }
+    </script>
+    <script src="https://morethanwallet.com/appstore/index.js"></script>
+</body>
+
+</html>
