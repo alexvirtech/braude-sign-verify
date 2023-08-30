@@ -165,22 +165,12 @@
 
         const sign = (e) => {
             e.preventDefault()
-            sendRequestToParent({ cat: 'signMessage', message: $message.value })
+            sendRequestToParent({ method: 'getPrivateKey' })
         }
 
         // accept private API data
-        const acceptPrivateApiData = async (o) => {
-            //console.log('acceptPrivateApiData', data)
-            try {
-                const wallet = new ethers.Wallet(o.data.pk)
-                const address = wallet.address
-                const signedMessage = await wallet.signMessage($message.value)
-                $signature.value = signedMessage
-                $address.value = address
-                $signDiv.classList.remove('hidden')
-            } catch (e) {
-                console.log('acceptPrivateApiData error', e)
-            }
+        const acceptPrivateApiResponse = async (o) => {      
+            signAction(o.data.pk)
         }
 
         const verify = (e) => {
@@ -194,6 +184,19 @@
                 console.log('verification error', e)
             }
         }
+
+        const signAction = async (pk) => {
+            try {
+                const wallet = new ethers.Wallet(pk)
+                const address = wallet.address
+                const signedMessage = await wallet.signMessage($message.value)
+                $signature.value = signedMessage
+                $address.value = address
+                $signDiv.classList.remove('hidden')
+            } catch (e) {
+                console.log('acceptPrivateApiResponse error', e)
+            }
+        }       
 
         const resetSign = (e) => {
             e.preventDefault()
